@@ -108,34 +108,39 @@ function startSelfChat(chatId) {
 				"Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать."));
 }
 
-function startNewChat(chatId) {
-	db.isWaiting(chatId)
-	.then(function(isWaiting) {
-		if (isWaiting) {
-			bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
-			return Promise.reject();
-		} else {
-			bot.sendMessage(chatId, "Ищу собеседника...");
-			return db.popWaiting()
-		}
-	})
-	.then(function(partnerId) {
-		if (!partnerId) {
-			db.addWaiting(chatId)
-			.then(function() {
-				bot.sendMessage(chatId, "Сейчас партнёров нет. Вы поставлены в список ожидания");
-			});
-			return Promise.reject();
-		} else {
-			return db.setPartner(chatId, partnerId);
-		}
-	})
+function startNewChat(chatId, partnerId) {
+	db.setPartner(chatId, partnerId)
 	.then(function() {
 		const successMessage = "Ура! Вы начали новый чат.\n\n" +
 			"Наберите /end когда надоест, чтобы прекратить.";
 		bot.sendMessage(chatId, successMessage);
 		bot.sendMessage(partnerId, successMessage);
 	});
+}
+
+function findNewChat(chatId) {
+	db.popWaiting()
+	.then(function(partnerId) {
+		if (!partnerId) {
+			db.addWaiting(chatId)
+			.then(() => bot.sendMessage(chatId, 
+						"Сейчас партнёров нет. Вы поставлены в список ожидания"));
+		} else {
+			startNewChat(chatId, partnerId);
+		}
+	})
+}
+
+function tryFindNewChat(chatId) {
+	db.isWaiting(chatId)
+	.then(function(isWaiting) {
+		if (isWaiting) {
+			bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
+		} else {
+			bot.sendMessage(chatId, "Ищу собеседника...");
+			findNewChat(chatId);
+		}
+	})
 }
 
 bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
@@ -153,7 +158,7 @@ bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 		} else if (match[1] === "self") {
 			startSelfChat(chatId);
 		} else {
-			startNewChat(chatId);
+			tryFindNewChat(chatId);
 		}
 	});
 });
