@@ -89,7 +89,8 @@ bot.onText(/\/new[ ]*(.*)/, (msg, match) => {
 									.hset(redisPartner, chatId, partnerId)
 									.hset(redisPartner, partnerId, chatId)
 									.exec(function(err) {
-										const successMessage = "Ура! Вы начали новый чат.";
+										const successMessage = "Ура! Вы начали новый чат.\n\n" +
+											"Наберите /end когда надоест, чтобы прекратить.";
 										bot.sendMessage(chatId, successMessage);
 										bot.sendMessage(partnerId, successMessage);
 									});
