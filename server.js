@@ -22,21 +22,43 @@ redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
 const redisPartner = "partner";
 const redisWaiting = "waiting";
+const redisChats = "chats";
 
 bot.onText(/^\/start/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
+
 	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
 	bot.sendMessage(chatId, 
 			"Привет! Это бот для анонимного чата. В нём ты сможешь найти анонимного собеседника на любую тему, и прервать разговор в любую минуту, если он тебе не понравится.\n\n" +
 			"ЧАТ ПЕРЕСЫЛАЕТ ТОЛЬКО ТЕКСТ. Сорри. Ведутся работы.\n\n" +
 			"Набери /new, чтобы найти себе собеседника.");
 });
 
-bot.onText(/\/end/, (msg) => {
+bot.onText(/^\/stats/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
+
 	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
+	redisClient.multi()
+		.scard(redisChats)
+		.hlen(redisPartner)
+		.exec(function(err, users, chats) {
+			bot.sendMessage(chatId, "Сервисом пользуется " + users " пользователей, сейчас активно " + chats + " чатов.");
+		});
+});
+
+bot.onText(/^\/end/, (msg) => {
+	if (msg.eaten) { return; }
+	msg.eaten = true;
+
+	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
 	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
 		if (partnerId) {
 			redisClient.multi()
@@ -56,10 +78,13 @@ bot.onText(/\/end/, (msg) => {
 	});
 });
 
-bot.onText(/\/new[ ]*(.*)/, (msg, match) => {
+bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
+
 	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
 	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
 		if (partnerId) {
 			bot.sendMessage(chatId, "Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
@@ -110,7 +135,10 @@ bot.onText(/\/new[ ]*(.*)/, (msg, match) => {
 bot.onText(/.*/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
+
 	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
 	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
 		if (err) return;
 		if (!partnerId) {
