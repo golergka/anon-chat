@@ -7,14 +7,15 @@ function DB(redis) {
 }
 
 DB.prototype.getStats = function(callback) {
+	var self = this;
 	return new Promise(function(resolve, reject) {
-		this.redis.multi()
+		self.redis.multi()
 			.scard(redisChats)
 			.hlen(redisPartner)
 			.exec(function(err, res) {
 				if(err) { 
 					console.error("DB error: " + err);
-					reject(err);
+					reject();
 				} else {
 					resolve({
 						users: res[0],
