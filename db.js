@@ -14,7 +14,7 @@ DB.prototype.getStats = function(callback) {
 			.exec(function(err, res) {
 				if(err) { 
 					console.error("DB error: " + err);
-					reject();
+					reject(err);
 				} else {
 					resolve({
 						users: res[0],

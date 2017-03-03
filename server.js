@@ -53,8 +53,8 @@ bot.onText(/^\/stats/, (msg) => {
 					"Пользователей: " + stats.users + "\n" +
 					"Чатов: " + stats.chats);
 		})
-		.catch(function() {
-			bot.sendMessage(chatId, "Что-то пошло не так");
+		.catch(function(err) {
+			bot.sendMessage(chatId, "Что-то пошло не так: " + err);
 		});
 });
 
