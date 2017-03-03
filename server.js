@@ -16,7 +16,7 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, telegram_options);
 const url = process.env.APP_URL || "https://talkon.herokuapp.com:443";
 bot.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
 
-const GOD_NAME = process.env.GOD_NAME;
+const GOD_ID = process.env.GOD_ID;
 
 const redisClient = Redis.createClient(REDIS_URL);
 
@@ -39,8 +39,6 @@ bot.onText(/^\/start/, (msg) => {
 });
 
 bot.onText(/^\/stats/, (msg) => {
-	console.log(msg);
-
 	if (msg.eaten) { return; }
 	msg.eaten = true;
 
@@ -90,7 +88,7 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 	const chatId = msg.chat.id;
 	redisClient.sadd(redisChats, chatId);
 
-	if (GOD_NAME && msg.from.username === GOD_NAME) {
+	if (GOD_ID && msg.from.id === GOD_ID) {
 		let broadcast = match;
 		bot.sendMessage(chatId, "Принято к исполнению, мой господин.");
 		redisClient.smembers(redisChats, function(err, chats) {
@@ -99,7 +97,7 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 			}
 		});
 	} else {
-		bot.sendMessage(chatId, "Это не для тебя команда, " + msg.from.username);
+		bot.sendMessage(chatId, "Это не для тебя команда.");
 	}
 });
 
