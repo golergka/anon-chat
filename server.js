@@ -24,7 +24,6 @@ const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
-const redisPartner = "partner";
 const redisWaiting = "waiting";
 const redisChats = "chats";
 
@@ -68,10 +67,8 @@ bot.onText(/^\/end/, (msg) => {
 	db.getPartner(chatId)
 		.then(function(partnerId) {
 			if (partnerId) {
-				redisClient.multi()
-					.hdel(redisPartner, chatId)
-					.hdel(redisPartner, partnerId)
-					.exec(function(err) {
+				db.deletePartners(chatId, partnerId)
+					.then(function() {
 						bot.sendMessage(chatId, "Ты закончил чат. Набери /new, чтобы найти нового собеседника!");
 						if (chatId != partnerId) {
 							bot.sendMessage(partnerId, "Собеседник завершил чат. Набери /new, чтобы начать новый разговор!");

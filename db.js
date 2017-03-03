@@ -80,4 +80,22 @@ DB.prototype.setPartner = function(firstId, secondId) {
 	});
 }
 
+DB.prototype.deletePartners = function(firstId, secondId) {
+	let self = this;
+	return new Promise(function(resolve, reject) {
+		let multi = redisClient.multi();
+		multi.hdel(self.keyPartner, firstId);
+		if (firstId != secondId) {
+			multi.hdel(self.keyPartner, secondId);
+		}
+		multi.exec(function(err) {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
 module.exports = DB;
