@@ -10,8 +10,8 @@ DB.prototype.getStats = function(callback) {
 	var self = this;
 	return new Promise(function(resolve, reject) {
 		self.redis.multi()
-			.scard(redisChats)
-			.hlen(redisPartner)
+			.scard(self.keyChats)
+			.hlen(self.keyPartner)
 			.exec(function(err, res) {
 				if(err) { 
 					console.error("DB error: " + err);
