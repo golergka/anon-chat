@@ -117,19 +117,12 @@ bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 				bot.sendMessage(chatId, "Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
 			} else {
 				if (match[1] === "self") {
-					var success = function() {
-						db.setPartner(chatId, partnerId)
-							.then(function() {
-								bot.sendMessage(chatId, "Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать.");
-							});
-					};
-					redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
-						if (isMember) {
-							redisClient.srem(redisWaiting, chatId, success);
-						} else {
-							success();
-						}
-					});
+					db.removeWaiting(chatId)
+						.then(function() {
+							return db.setPartner(chatId, chatId);
+						}).then(function() {
+							bot.sendMessage(chatId, "Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать.");
+						});
 				} else {
 					redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
 						if (isMember) {

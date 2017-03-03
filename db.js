@@ -4,6 +4,7 @@ function DB(redis) {
 	this.redis = redis;
 	this.keyPartner = "partner";
 	this.keyChats = "chats";
+	this.keyWaiting = "waiting";
 }
 
 DB.prototype.getStats = function(callback) {
@@ -93,6 +94,27 @@ DB.prototype.deletePartners = function(firstId, secondId) {
 				reject(err);
 			} else {
 				resolve();
+			}
+		});
+	});
+}
+
+DB.prototype.removeWaiting = function(chatId) {
+	let self = this;
+	return new Promise(function(resolve, reject) {
+		redisClient.sismember(self.keyWaiting, chatId, function(err, isMember) {
+			if (err) {
+				reject(err);
+			} else if (!isMember) {
+				resolve();
+			} else {
+				redisClient.srem(self.keyWaiting, chatId, function(err) {
+					if (err) {
+						reject(err);
+					} else {
+						resolve();
+					}
+				});
 			}
 		});
 	});
