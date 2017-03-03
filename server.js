@@ -97,7 +97,7 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 			}
 		});
 	} else {
-		bot.sendMessage(chatId, "Это не для тебя команда.");
+		bot.sendMessage(chatId, "Это не для тебя команда, " + msg.from.username);
 	}
 });
 
