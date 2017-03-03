@@ -24,9 +24,6 @@ const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
-const redisWaiting = "waiting";
-const redisChats = "chats";
-
 bot.onText(/^\/start/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
@@ -104,6 +101,43 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 	}
 });
 
+function startSelfChat(chatId) {
+	db.removeWaiting(chatId)
+	.then(() => db.setPartner(chatId, chatId))
+	.then(() => bot.sendMessage(chatId, 
+				"Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать."));
+}
+
+function startNewChat(chatId) {
+	db.isWaiting(chatId)
+	.then(function(isWaiting) {
+		if (isWaiting) {
+			bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
+			return Promise.reject();
+		} else {
+			bot.sendMessage(chatId, "Ищу собеседника...");
+			return db.popWaiting()
+		}
+	})
+	.then(function(partnerId) {
+		if (!partnerId) {
+			db.addWaiting(chatId)
+			.then(function() {
+				bot.sendMessage(chatId, "Сейчас партнёров нет. Вы поставлены в список ожидания");
+			});
+			return Promise.reject();
+		} else {
+			return db.setPartner(chatId, partnerId);
+		}
+	})
+	.then(function() {
+		const successMessage = "Ура! Вы начали новый чат.\n\n" +
+			"Наберите /end когда надоест, чтобы прекратить.";
+		bot.sendMessage(chatId, successMessage);
+		bot.sendMessage(partnerId, successMessage);
+	});
+}
+
 bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
@@ -112,41 +146,15 @@ bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 	db.rememberChat(chatId);
 
 	db.getPartner(chatId)
-		.then(function(partnerId) {
-			if (partnerId) {
-				bot.sendMessage(chatId, "Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
-			} else {
-				if (match[1] === "self") {
-					db.removeWaiting(chatId)
-						.then(function() {
-							return db.setPartner(chatId, chatId);
-						}).then(function() {
-							bot.sendMessage(chatId, "Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать.");
-						});
-				} else {
-					redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
-						if (isMember) {
-							bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
-						} else {
-							bot.sendMessage(chatId, "Ищу собеседника...");
-							redisClient.spop(redisWaiting, function(err, partnerId) {
-								if (partnerId) {
-									db.setPartner(chatId, partnerId)
-										.then(function() {
-											const successMessage = "Ура! Вы начали новый чат.\n\n" +
-												"Наберите /end когда надоест, чтобы прекратить.";
-											bot.sendMessage(chatId, successMessage);
-										});
-								} else {
-									redisClient.sadd(redisWaiting, chatId, function(err) {
-										bot.sendMessage(chatId, "Сейчас партнёров нет. Вы поставлены в список ожидания");
-									});
-								}
-							});
-						}
-					});
-				}
-			}
+	.then(function(partnerId) {
+		if (partnerId) {
+			bot.sendMessage(chatId, 
+					"Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
+		} else if (match[1] === "self") {
+			startSelfChat(chatId);
+		} else {
+			startNewChat(chatId);
+		}
 	});
 });
 
@@ -169,30 +177,30 @@ bot.on('message', (msg) => {
 	db.rememberChat(chatId);
 
 	db.getPartner(chatId)
-		.then(function(partnerId) {
-			if (!partnerId) {
-				bot.sendMessage(chatId, 
-						"У вас сейчас нет партнёра по чату. Наберите /new, чтобы начать новый чат");
-			} else {
-				let options = {};
-				const caption = msg.caption;
-				if (caption) { options.caption = caption; }
+	.then(function(partnerId) {
+		if (!partnerId) {
+			bot.sendMessage(chatId, 
+					"У вас сейчас нет партнёра по чату. Наберите /new, чтобы начать новый чат");
+		} else {
+			let options = {};
+			const caption = msg.caption;
+			if (caption) { options.caption = caption; }
 
-				if (msg.sticker) {
-					bot.sendSticker(partnerId, msg.sticker.file_id, options);
-				} else if (msg.audio) {
-					bot.sendAudio(partnerId, msg.audio, options);
-				} else if (msg.document) {
-					bot.sendDocument(partnerId, msg.document, options);
-				} else if (msg.game) {
-					bot.sendGame(partnerId, msg.game, options);
-				} else if (msg.photo) {
-					bot.sendPhoto(partnerId, msg.photo, options);
-				} else if (msg.voice) {
-					bot.sendVoice(partnerId, msg.voice, options);
-				} else {
-					bot.sendMessage(partnerId, msg.text);
-				}
+			if (msg.sticker) {
+				bot.sendSticker(partnerId, msg.sticker.file_id, options);
+			} else if (msg.audio) {
+				bot.sendAudio(partnerId, msg.audio, options);
+			} else if (msg.document) {
+				bot.sendDocument(partnerId, msg.document, options);
+			} else if (msg.game) {
+				bot.sendGame(partnerId, msg.game, options);
+			} else if (msg.photo) {
+				bot.sendPhoto(partnerId, msg.photo, options);
+			} else if (msg.voice) {
+				bot.sendVoice(partnerId, msg.voice, options);
+			} else {
+				bot.sendMessage(partnerId, msg.text);
 			}
-		});
+		}
+	});
 });

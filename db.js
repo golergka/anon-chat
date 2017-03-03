@@ -8,7 +8,7 @@ function DB(redis) {
 }
 
 DB.prototype.getStats = function(callback) {
-	let self = this;
+	const self = this;
 	return new Promise(function(resolve, reject) {
 		self.redis.multi()
 			.scard(self.keyChats)
@@ -31,7 +31,7 @@ DB.prototype.rememberChat = function(chatId) {
 }
 
 DB.prototype.forAllChats = function(worker) {
-	let self = this;
+	const self = this;
 	return new Promise(function(resolve, reject) {
 		self.redis.smembers(self.keyChats, function(err, chats) {
 			if (err) { 
@@ -51,7 +51,7 @@ DB.prototype.forAllChats = function(worker) {
 }
 
 DB.prototype.getPartner = function(chatId) {
-	let self = this;
+	const self = this;
 	return new Promise(function(resolve, reject) {
 		self.redis.hget(self.keyPartner, chatId, function(err, partnerId) {
 			if (err) {
@@ -64,7 +64,7 @@ DB.prototype.getPartner = function(chatId) {
 }
 
 DB.prototype.setPartner = function(firstId, secondId) {
-	let self = this;
+	const self = this;
 	return new Promise(function(resolve, reject) {
 		let multi = self.redis.multi();
 		multi.hset(self.keyPartner, firstId, secondId);
@@ -82,9 +82,9 @@ DB.prototype.setPartner = function(firstId, secondId) {
 }
 
 DB.prototype.deletePartners = function(firstId, secondId) {
-	let self = this;
+	const self = this;
 	return new Promise(function(resolve, reject) {
-		let multi = redisClient.multi();
+		let multi = self.redis.multi();
 		multi.hdel(self.keyPartner, firstId);
 		if (firstId != secondId) {
 			multi.hdel(self.keyPartner, secondId);
@@ -99,24 +99,60 @@ DB.prototype.deletePartners = function(firstId, secondId) {
 	});
 }
 
-DB.prototype.removeWaiting = function(chatId) {
-	let self = this;
+DB.prototype.isWaiting = function(chatId) {
+	const self = this;
 	return new Promise(function(resolve, reject) {
-		redisClient.sismember(self.keyWaiting, chatId, function(err, isMember) {
+		self.redis.sismemeber(self.keyWaiting, chatId, function(err, isMember) {
 			if (err) {
 				reject(err);
-			} else if (!isMember) {
-				resolve();
 			} else {
-				redisClient.srem(self.keyWaiting, chatId, function(err) {
-					if (err) {
-						reject(err);
-					} else {
-						resolve();
-					}
-				});
+				resolve(isMember);
 			}
 		});
+	});
+}
+
+DB.prototype.addWaiting = function(chatId) {
+	const self = this;
+	return new Promise(function(resolve, reject) {
+		self.redis.sadd(self.keyWaiting, chatId, function(err) {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
+DB.prototype.popWaiting = function() {
+	const self = this;
+	return new Promise(function(resolve, reject) {
+		self.redis.spop(self.keyWaiting, function(err, partnerId) {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(partnerId);
+			}
+		});
+	});
+}
+
+DB.prototype.removeWaiting = function(chatId) {
+	const self = this;
+	return self.isWaiting(chatId)
+	.then(function(isMember) {
+		if (!isMember) {
+			resolve();
+		} else {
+			self.redis.srem(self.keyWaiting, chatId, function(err) {
+				if (err) {
+					reject(err);
+				} else {
+					resolve();
+				}
+			});
+		}
 	});
 }
 
