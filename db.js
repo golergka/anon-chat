@@ -62,4 +62,22 @@ DB.prototype.getPartner = function(chatId) {
 	});
 }
 
+DB.prototype.setPartner = function(firstId, secondId) {
+	let self = this;
+	return new Promise(function(resolve, reject) {
+		let multi = self.redis.multi();
+		multi.hset(self.keyPartner, firstId, secondId);
+		if (firstId != secondId) {
+			mulri.hset(self.keyPartner, secondId, firstId);
+		}
+		multi.exec(function(err) {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
 module.exports = DB;

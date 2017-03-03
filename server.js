@@ -82,7 +82,7 @@ bot.onText(/^\/end/, (msg) => {
 						"У тебя сейчас нет собеседника, так что ты не можешь закончить чат.\n\n" +
 						"Чтобы послать кого-нибудь ненужного, надо сначала начать диалог с кем-нибудь ненужным! Набери /new для того, чтобы это сделать.");
 			}
-	});
+		});
 });
 
 bot.onText(/^\/broadcast (.+)/, (msg, match) => {
@@ -114,50 +114,49 @@ bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
 
-	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
-		if (partnerId) {
-			bot.sendMessage(chatId, "Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
-		} else {
-			if (match[1] === "self") {
-				var success = function() {
-					redisClient.hset(redisPartner, chatId, chatId, function() {
-						bot.sendMessage(chatId, "Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать.");
-					});
-				};
-				redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
-					if (isMember) {
-						redisClient.srem(redisWaiting, chatId, success);
-					} else {
-						success();
-					}
-				});
+	db.getPartner(chatId)
+		.then(function(partnerId) {
+			if (partnerId) {
+				bot.sendMessage(chatId, "Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
 			} else {
-				redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
-					if (isMember) {
-						bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
-					} else {
-						bot.sendMessage(chatId, "Ищу собеседника...");
-						redisClient.spop(redisWaiting, function(err, partnerId) {
-							if (partnerId) {
-								redisClient.multi()
-									.hset(redisPartner, chatId, partnerId)
-									.hset(redisPartner, partnerId, chatId)
-									.exec(function(err) {
-										const successMessage = "Ура! Вы начали новый чат.\n\n" +
-											"Наберите /end когда надоест, чтобы прекратить.";
-										bot.sendMessage(chatId, successMessage);
-										bot.sendMessage(partnerId, successMessage);
+				if (match[1] === "self") {
+					var success = function() {
+						db.setPartner(chatId, partnerId)
+							.then(function() {
+								bot.sendMessage(chatId, "Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать.");
+							});
+					};
+					redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
+						if (isMember) {
+							redisClient.srem(redisWaiting, chatId, success);
+						} else {
+							success();
+						}
+					});
+				} else {
+					redisClient.sismember(redisWaiting, chatId, function(err, isMember) {
+						if (isMember) {
+							bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
+						} else {
+							bot.sendMessage(chatId, "Ищу собеседника...");
+							redisClient.spop(redisWaiting, function(err, partnerId) {
+								if (partnerId) {
+									db.setPartner(chatId, partnerId)
+										.then(function() {
+											const successMessage = "Ура! Вы начали новый чат.\n\n" +
+												"Наберите /end когда надоест, чтобы прекратить.";
+											bot.sendMessage(chatId, successMessage);
+										});
+								} else {
+									redisClient.sadd(redisWaiting, chatId, function(err) {
+										bot.sendMessage(chatId, "Сейчас партнёров нет. Вы поставлены в список ожидания");
 									});
-							} else {
-								redisClient.sadd(redisWaiting, chatId, function(err) {
-									bot.sendMessage(chatId, "Сейчас партнёров нет. Вы поставлены в список ожидания");
-								});
-							}
-						});
-					}
-				});
+								}
+							});
+						}
+					});
+				}
 			}
-		}
 	});
 });
 
