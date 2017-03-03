@@ -23,12 +23,13 @@ redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 const redisPartner = "partner";
 const redisWaiting = "waiting";
 
-bot.onText(/\/start/, (msg) => {
+bot.onText(/^\/start/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
 	const chatId = msg.chat.id;
 	bot.sendMessage(chatId, 
 			"Привет! Это бот для анонимного чата. В нём ты сможешь найти анонимного собеседника на любую тему, и прервать разговор в любую минуту, если он тебе не понравится.\n\n" +
+			"ЧАТ ПЕРЕСЫЛАЕТ ТОЛЬКО ТЕКСТ. Сорри. Ведутся работы.\n\n" +
 			"Набери /new, чтобы найти себе собеседника.");
 });
 
