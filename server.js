@@ -43,7 +43,9 @@ bot.onText(/\/end/, (msg) => {
 				.hdel(redisPartner, partnerId)
 				.exec(function(err) {
 					bot.sendMessage(chatId, "Ты закончил чат. Набери /new, чтобы найти нового собеседника!");
-					bot.sendMessage(partnerId, "Собеседник завершил чат. Набери /new, чтобы начать новый разговор!");
+					if (chatId != partnerId) {
+						bot.sendMessage(partnerId, "Собеседник завершил чат. Набери /new, чтобы начать новый разговор!");
+					}
 				});
 		} else {
 			bot.sendMessage(chatId, 
