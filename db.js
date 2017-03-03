@@ -13,6 +13,7 @@ DB.prototype.getStats = function(callback) {
 			.hlen(redisPartner)
 			.exec(function(err, res) {
 				if(err) { 
+					console.error("DB error: " + err);
 					reject();
 				} else {
 					resolve({
