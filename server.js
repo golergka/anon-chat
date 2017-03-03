@@ -39,6 +39,8 @@ bot.onText(/^\/start/, (msg) => {
 });
 
 bot.onText(/^\/stats/, (msg) => {
+	console.log(msg);
+
 	if (msg.eaten) { return; }
 	msg.eaten = true;
 
