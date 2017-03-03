@@ -89,7 +89,7 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 	redisClient.sadd(redisChats, chatId);
 
 	if (GOD_ID && msg.from.id === GOD_ID) {
-		let broadcast = match;
+		let broadcast = match[1];
 		bot.sendMessage(chatId, "Принято к исполнению, мой господин.");
 		redisClient.smembers(redisChats, function(err, chats) {
 			for(let i = 0; i < chats.length; i++) {
