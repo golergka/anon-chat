@@ -33,7 +33,7 @@ bot.onText(/^\/start/, (msg) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	bot.sendMessage(chatId, 
 			"Привет! Это бот для анонимного чата. В нём ты сможешь найти анонимного собеседника на любую тему, и прервать разговор в любую минуту, если он тебе не понравится.\n\n" +
