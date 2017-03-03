@@ -14,7 +14,7 @@ const telegram_options = {
 };
 const bot = new TelegramBot(TELEGRAM_TOKEN, telegram_options);
 const url = process.env.APP_URL || "https://talkon.herokuapp.com:443";
-bot.setWebHook(`${url}/bot${TOKEN}`);
+bot.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
 
 const redisClient = Redis.createClient(REDIS_URL);
 
