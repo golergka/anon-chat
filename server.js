@@ -169,6 +169,7 @@ bot.onText(/^(\/.*)/, (msg) => {
 });
 
 bot.on('message', (msg) => {
+	if (msg.text && msg.text[0] == '/') return;
 	if (msg.eaten) { return; }
 	msg.eaten = true;
 
