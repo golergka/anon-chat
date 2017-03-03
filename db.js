@@ -7,14 +7,13 @@ function DB(redis) {
 }
 
 DB.prototype.getStats = function(callback) {
-	var self = this;
+	let self = this;
 	return new Promise(function(resolve, reject) {
 		self.redis.multi()
 			.scard(self.keyChats)
 			.hlen(self.keyPartner)
 			.exec(function(err, res) {
 				if(err) { 
-					console.error("DB error: " + err);
 					reject(err);
 				} else {
 					resolve({
@@ -28,6 +27,26 @@ DB.prototype.getStats = function(callback) {
 
 DB.prototype.rememberChat = function(chatId) {
 	this.redis.sadd(this.keyChats, chatId);
+}
+
+DB.prototype.forAllChats = function(worker) {
+	let self = this;
+	return new Promise(function(resolve, reject) {
+		self.redis.smembers(self.keyChats, function(err, chats) {
+			if (err) { 
+				reject(err);
+			} else {
+				let tasks = [];
+				for(let i = 0; i < chats.length; i++)
+				{
+					tasks.push(worker(chats[i]));
+				}
+				Promise.all(tasks)
+					.then(resolve)
+					.catch(reject);
+			}
+		});
+	});
 }
 
 module.exports = DB;

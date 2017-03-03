@@ -94,10 +94,12 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 	if (GOD_ID && msg.from.id === GOD_ID) {
 		let broadcast = match[1];
 		bot.sendMessage(chatId, "Принято к исполнению, мой господин.");
-		redisClient.smembers(redisChats, function(err, chats) {
-			for(let i = 0; i < chats.length; i++) {
-				bot.sendMessage(chats[i], match);
-			}
+		db.forAllChats(function(chatId) {
+			return bot.sendMessage(chatId, broadcast);
+		}).then(function() {
+			bot.sendMessage(chatId, "Рассылка завершена, мой господин.");
+		}).catch(function(err) {
+			bot.sendMessage(chatId, "Что-то пошло не так: " + err);
 		});
 	} else {
 		bot.sendMessage(chatId, "Это не для тебя команда.");
