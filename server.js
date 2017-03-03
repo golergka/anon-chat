@@ -5,9 +5,17 @@ const Redis = require("redis");
 
 const REDIS_URL = process.env.REDIS_URL;
 
-const token = "180445993:AAHghLnBrO-e5HgD-1X_J9V1XBQ_qwslpL4";
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || "180445993:AAHghLnBrO-e5HgD-1X_J9V1XBQ_qwslpL4";
 
-const bot = new TelegramBot(token, {polling: true});
+const telegram_options = {
+	webHook: {
+		port: process.env.PORT
+	}
+};
+const bot = new TelegramBot(TELEGRAM_TOKEN, telegram_options);
+const url = process.env.APP_URL || "https://talkon.herokuapp.com:443";
+bot.setWebHook(`${url}/bot${TOKEN}`);
+
 const redisClient = Redis.createClient(REDIS_URL);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
