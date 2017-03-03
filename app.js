@@ -6,6 +6,7 @@ const Redis = require("redis");
 const token = "180445993:AAHghLnBrO-e5HgD-1X_J9V1XBQ_qwslpL4";
 
 const bot = new TelegramBot(token, {polling: true});
+console.log("Environment redis url: " + process.env.REDIS_URL);
 const REDIS_URL = process.env.REDIS_URL || "127.0.0.1:6379";
 const redisClient = Redis.createClient(REDIS_URL);
 
