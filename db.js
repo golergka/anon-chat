@@ -26,4 +26,8 @@ DB.prototype.getStats = function(callback) {
 	});
 }
 
+DB.prototype.rememberChat = function(chatId) {
+	this.redis.sadd(this.keyChats, chatId);
+}
+
 module.exports = DB;

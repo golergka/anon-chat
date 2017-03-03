@@ -45,7 +45,7 @@ bot.onText(/^\/stats/, (msg) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	db.getStats()
 		.then(function(stats) {
@@ -54,7 +54,7 @@ bot.onText(/^\/stats/, (msg) => {
 					"Чатов: " + stats.chats);
 		})
 		.catch(function(err) {
-			bot.sendMessage(chatId, "Что-то пошло не так: " + err);
+			bot.sendMessage(chatId, "Что-то пошло не так");
 		});
 });
 
@@ -63,7 +63,7 @@ bot.onText(/^\/end/, (msg) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
 		if (partnerId) {
@@ -89,7 +89,7 @@ bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	if (GOD_ID && msg.from.id === GOD_ID) {
 		let broadcast = match[1];
@@ -109,7 +109,7 @@ bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
 		if (partnerId) {
@@ -163,7 +163,7 @@ bot.onText(/^(\/.*)/, (msg) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	bot.sendMessage(chatId, "Извини, такая команда мне неизвестна.");
 });
@@ -174,7 +174,7 @@ bot.on('message', (msg) => {
 	msg.eaten = true;
 
 	const chatId = msg.chat.id;
-	redisClient.sadd(redisChats, chatId);
+	db.rememberChat(chatId);
 
 	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
 		if (err) return;
