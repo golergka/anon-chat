@@ -68,7 +68,7 @@ DB.prototype.setPartner = function(firstId, secondId) {
 		let multi = self.redis.multi();
 		multi.hset(self.keyPartner, firstId, secondId);
 		if (firstId != secondId) {
-			mulri.hset(self.keyPartner, secondId, firstId);
+			multi.hset(self.keyPartner, secondId, firstId);
 		}
 		multi.exec(function(err) {
 			if (err) {
