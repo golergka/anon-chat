@@ -155,6 +155,16 @@ bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
 	});
 });
 
+bot.onText(/^(\/.*)/, (msg) => {
+	if (msg.eaten) { return; }
+	msg.eaten = true;
+
+	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
+	bot.sendMessage(chatId, "Извини, такая команда мне неизвестна.");
+});
+
 bot.onText(/.*/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
