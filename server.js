@@ -19,6 +19,8 @@ bot.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
 const GOD_ID = process.env.GOD_ID;
 
 const redisClient = Redis.createClient(REDIS_URL);
+const DB = require("./db")
+const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
@@ -45,13 +47,14 @@ bot.onText(/^\/stats/, (msg) => {
 	const chatId = msg.chat.id;
 	redisClient.sadd(redisChats, chatId);
 
-	redisClient.multi()
-		.scard(redisChats)
-		.hlen(redisPartner)
-		.exec(function(err, res) {
+	db.getStats()
+		.then(function(stats) {
 			bot.sendMessage(chatId, 
-					"Пользователей: " + res[0] + "\n" +
-					"Чатов: " + res[1]/2);
+					"Пользователей: " + stats.users + "\n" +
+					"Чатов: " + stats.chats);
+		})
+		.catch(function() {
+			bot.sendMessage(chatId, "Что-то пошло не так");
 		});
 });
 
