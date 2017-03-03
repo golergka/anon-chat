@@ -47,8 +47,8 @@ bot.onText(/^\/stats/, (msg) => {
 	redisClient.multi()
 		.scard(redisChats)
 		.hlen(redisPartner)
-		.exec(function(err, users, chats) {
-			bot.sendMessage(chatId, "Сервисом пользуется " + users + " пользователей, сейчас активно " + chats + " чатов.");
+		.exec(function(err, res) {
+			bot.sendMessage(chatId, "Сервисом пользуется " + res[0] + " пользователей, сейчас активно " + res[1] + " чатов.");
 		});
 });
 
