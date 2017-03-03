@@ -3,10 +3,12 @@
 const TelegramBot = require("node-telegram-bot-api");
 const Redis = require("redis");
 
+const REDIS_URL = process.env.REDIS_URL;
+
 const token = "180445993:AAHghLnBrO-e5HgD-1X_J9V1XBQ_qwslpL4";
 
 const bot = new TelegramBot(token, {polling: true});
-const redisClient = Redis.createClient();
+const redisClient = Redis.createClient(REDIS_URL);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
