@@ -165,7 +165,7 @@ bot.onText(/^(\/.*)/, (msg) => {
 	bot.sendMessage(chatId, "Извини, такая команда мне неизвестна.");
 });
 
-bot.onText(/.*/, (msg) => {
+bot.on('message', (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
 
@@ -183,8 +183,6 @@ bot.onText(/.*/, (msg) => {
 			if (caption) { options.caption = caption; }
 
 			if (msg.sticker) {
-				console.log("Sending sticker...");
-				console.log(msg.sticker);
 				bot.sendSticker(partnerId, msg.sticker, options);
 			} else if (msg.audio) {
 				bot.sendAudio(partnerId, msg.audio, options);
