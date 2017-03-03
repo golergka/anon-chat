@@ -102,7 +102,7 @@ DB.prototype.deletePartners = function(firstId, secondId) {
 DB.prototype.isWaiting = function(chatId) {
 	const self = this;
 	return new Promise(function(resolve, reject) {
-		self.redis.sismemeber(self.keyWaiting, chatId, function(err, isMember) {
+		self.redis.sismember(self.keyWaiting, chatId, function(err, isMember) {
 			if (err) {
 				reject(err);
 			} else {
