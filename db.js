@@ -49,4 +49,17 @@ DB.prototype.forAllChats = function(worker) {
 	});
 }
 
+DB.prototype.getPartner = function(chatId) {
+	let self = this;
+	return new Promise(function(resolve, reject) {
+		self.redis.hget(self.keyPartner, chatId, function(err, partnerId) {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(partnerId);
+			}
+		});
+	});
+}
+
 module.exports = DB;

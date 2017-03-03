@@ -65,22 +65,23 @@ bot.onText(/^\/end/, (msg) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
 
-	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
-		if (partnerId) {
-			redisClient.multi()
-				.hdel(redisPartner, chatId)
-				.hdel(redisPartner, partnerId)
-				.exec(function(err) {
-					bot.sendMessage(chatId, "Ты закончил чат. Набери /new, чтобы найти нового собеседника!");
-					if (chatId != partnerId) {
-						bot.sendMessage(partnerId, "Собеседник завершил чат. Набери /new, чтобы начать новый разговор!");
-					}
-				});
-		} else {
-			bot.sendMessage(chatId, 
-					"У тебя сейчас нет собеседника, так что ты не можешь закончить чат.\n\n" +
-					"Чтобы послать кого-нибудь ненужного, надо сначала начать диалог с кем-нибудь ненужным! Набери /new для того, чтобы это сделать.");
-		}
+	db.getPartner(chatId)
+		.then(function(partnerId) {
+			if (partnerId) {
+				redisClient.multi()
+					.hdel(redisPartner, chatId)
+					.hdel(redisPartner, partnerId)
+					.exec(function(err) {
+						bot.sendMessage(chatId, "Ты закончил чат. Набери /new, чтобы найти нового собеседника!");
+						if (chatId != partnerId) {
+							bot.sendMessage(partnerId, "Собеседник завершил чат. Набери /new, чтобы начать новый разговор!");
+						}
+					});
+			} else {
+				bot.sendMessage(chatId, 
+						"У тебя сейчас нет собеседника, так что ты не можешь закончить чат.\n\n" +
+						"Чтобы послать кого-нибудь ненужного, надо сначала начать диалог с кем-нибудь ненужным! Набери /new для того, чтобы это сделать.");
+			}
 	});
 });
 
@@ -178,31 +179,31 @@ bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
 
-	redisClient.hget(redisPartner, chatId, function(err, partnerId) {
-		if (err) return;
-		if (!partnerId) {
-			bot.sendMessage(chatId, 
-					"У вас сейчас нет партнёра по чату. Наберите /new, чтобы начать новый чат");
-		} else {
-			let options = {};
-			const caption = msg.caption;
-			if (caption) { options.caption = caption; }
-
-			if (msg.sticker) {
-				bot.sendSticker(partnerId, msg.sticker.file_id, options);
-			} else if (msg.audio) {
-				bot.sendAudio(partnerId, msg.audio, options);
-			} else if (msg.document) {
-				bot.sendDocument(partnerId, msg.document, options);
-			} else if (msg.game) {
-				bot.sendGame(partnerId, msg.game, options);
-			} else if (msg.photo) {
-				bot.sendPhoto(partnerId, msg.photo, options);
-			} else if (msg.voice) {
-				bot.sendVoice(partnerId, msg.voice, options);
+	db.getPartner(chatId)
+		.then(function(partnerId) {
+			if (!partnerId) {
+				bot.sendMessage(chatId, 
+						"У вас сейчас нет партнёра по чату. Наберите /new, чтобы начать новый чат");
 			} else {
-				bot.sendMessage(partnerId, msg.text);
+				let options = {};
+				const caption = msg.caption;
+				if (caption) { options.caption = caption; }
+
+				if (msg.sticker) {
+					bot.sendSticker(partnerId, msg.sticker.file_id, options);
+				} else if (msg.audio) {
+					bot.sendAudio(partnerId, msg.audio, options);
+				} else if (msg.document) {
+					bot.sendDocument(partnerId, msg.document, options);
+				} else if (msg.game) {
+					bot.sendGame(partnerId, msg.game, options);
+				} else if (msg.photo) {
+					bot.sendPhoto(partnerId, msg.photo, options);
+				} else if (msg.voice) {
+					bot.sendVoice(partnerId, msg.voice, options);
+				} else {
+					bot.sendMessage(partnerId, msg.text);
+				}
 			}
-		}
-	});
+		});
 });
