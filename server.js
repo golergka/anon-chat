@@ -16,6 +16,8 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, telegram_options);
 const url = process.env.APP_URL || "https://talkon.herokuapp.com:443";
 bot.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
 
+const GOD_NAME = process.env.GOD_NAME;
+
 const redisClient = Redis.createClient(REDIS_URL);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
@@ -33,7 +35,6 @@ bot.onText(/^\/start/, (msg) => {
 
 	bot.sendMessage(chatId, 
 			"Привет! Это бот для анонимного чата. В нём ты сможешь найти анонимного собеседника на любую тему, и прервать разговор в любую минуту, если он тебе не понравится.\n\n" +
-			"ЧАТ ПЕРЕСЫЛАЕТ ТОЛЬКО ТЕКСТ. Сорри. Ведутся работы.\n\n" +
 			"Набери /new, чтобы найти себе собеседника.");
 });
 
@@ -48,7 +49,9 @@ bot.onText(/^\/stats/, (msg) => {
 		.scard(redisChats)
 		.hlen(redisPartner)
 		.exec(function(err, res) {
-			bot.sendMessage(chatId, "Сервисом пользуется " + res[0] + " пользователей, сейчас активно " + res[1] + " чатов.");
+			bot.sendMessage(chatId, 
+					"Пользователей: " + res[0] + "\n" +
+					"Чатов: " + res[1]/2);
 		});
 });
 
@@ -76,6 +79,26 @@ bot.onText(/^\/end/, (msg) => {
 					"Чтобы послать кого-нибудь ненужного, надо сначала начать диалог с кем-нибудь ненужным! Набери /new для того, чтобы это сделать.");
 		}
 	});
+});
+
+bot.onText(/^\/broadcast (.+)/, (msg, match) => {
+	if (msg.eaten) { return; }
+	msg.eaten = true;
+
+	const chatId = msg.chat.id;
+	redisClient.sadd(redisChats, chatId);
+
+	if (GOD_NAME && msg.from.username === GOD_NAME) {
+		let broadcast = match;
+		bot.sendMessage(chatId, "Принято к исполнению, мой господин.");
+		redisClient.smembers(redisChats, function(err, chats) {
+			for(let i = 0; i < chats.length; i++) {
+				bot.sendMessage(chats[i], match);
+			}
+		});
+	} else {
+		bot.sendMessage(chatId, "Это не для тебя команда.");
+	}
 });
 
 bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
@@ -145,7 +168,25 @@ bot.onText(/.*/, (msg) => {
 			bot.sendMessage(chatId, 
 					"У вас сейчас нет партнёра по чату. Наберите /new, чтобы начать новый чат");
 		} else {
-			bot.sendMessage(partnerId, msg.text);
+			let options = {};
+			const caption = msg.caption;
+			if (caption) { options.caption = caption; }
+
+			if (msg.sticker) {
+				bot.sendSticker(partnerId, msg.sticker);
+			} else if (msg.audio) {
+				bot.sendAudio(partnerId, msg.audio, options);
+			} else if (msg.document) {
+				bot.sendDocument(partnerId, msg.document, options);
+			} else if (msg.game) {
+				bot.sendGame(partnerId, msg.game, options);
+			} else if (msg.photo) {
+				bot.sendPhoto(partnerId, msg.photo, options);
+			} else if (msg.voice) {
+				bot.sendVoice(partnerId, msg.voice, options);
+			} else {
+				bot.sendMessage(partnerId, msg.text);
+			}
 		}
 	});
 });
