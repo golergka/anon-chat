@@ -35,31 +35,6 @@ const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
-bot.onText(/^\/end/, (msg) => {
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
-
-	db.getPartner(chatId)
-		.then(function(partnerId) {
-			if (partnerId) {
-				db.deletePartners(chatId, partnerId)
-					.then(function() {
-						bot.sendMessage(chatId, "Ты закончил чат. Набери /new, чтобы найти нового собеседника!");
-						if (chatId != partnerId) {
-							bot.sendMessage(partnerId, "Собеседник завершил чат. Набери /new, чтобы начать новый разговор!");
-						}
-					});
-			} else {
-				bot.sendMessage(chatId, 
-						"У тебя сейчас нет собеседника, так что ты не можешь закончить чат.\n\n" +
-						"Чтобы послать кого-нибудь ненужного, надо сначала начать диалог с кем-нибудь ненужным! Набери /new для того, чтобы это сделать.");
-			}
-		});
-});
-
 bot.onText(/^\/broadcast (.+)/, (msg, match) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
@@ -160,12 +135,17 @@ const start = new Start(db, bot);
 const Stats = require("./commands/stats");
 const stats = new Stats(db, bot);
 
+const End = require("./commands/end");
+const end = new End(db, bot);
+
 bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
 
 	if (start.tryEat(msg) ||
-		stats.tryEat(msg)) {
+		stats.tryEat(msg) ||
+		end.tryEat(msg)) {
+		msg.eaten = true;
 		return;
 	}
 

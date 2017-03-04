@@ -8,11 +8,10 @@ class Start extends Command {
 	}
 
 	tryEat(msg) {
-		let match = this._re.exec(msg.text);
+		const match = this._re.exec(msg.text);
 		if (!match) {
 			return false;
 		} else {
-			msg.eaten = true;
 			this._bot.sendMessage(
 				msg.chat.id,
 				"Привет! Это бот для анонимного чата. В нём ты сможешь найти анонимного собеседника на любую тему, и прервать разговор в любую минуту, если он тебе не понравится.\n\n" +
