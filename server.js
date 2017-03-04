@@ -16,7 +16,7 @@ const bot = (function() {
 	if (PORT && APP_URL) {
 		console.log("Running on Heroku");
 		let result = new TelegramBot(TELEGRAM_TOKEN, { webHook: { port: PORT }});
-		result.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
+		result.setWebHook(`${APP_URL}/bot${TELEGRAM_TOKEN}`);
 		console.log("Set up webhook");
 		return result;
 	} else {
