@@ -33,67 +33,8 @@ const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
-function startSelfChat(chatId) {
-	db.removeWaiting(chatId)
-	.then(() => db.setPartner(chatId, chatId))
-	.then(() => bot.sendMessage(chatId, 
-				"Поздравляю! Вы начали чат с самим собой. Попытайтесь себя не разочаровать."));
-}
-
-function startNewChat(chatId, partnerId) {
-	db.setPartner(chatId, partnerId)
-	.then(function() {
-		const successMessage = "Ура! Вы начали новый чат.\n\n" +
-			"Наберите /end когда надоест, чтобы прекратить.";
-		bot.sendMessage(chatId, successMessage);
-		bot.sendMessage(partnerId, successMessage);
-	});
-}
-
-function findNewChat(chatId) {
-	db.popWaiting()
-	.then(function(partnerId) {
-		if (!partnerId) {
-			db.addWaiting(chatId)
-			.then(() => bot.sendMessage(chatId, 
-						"Сейчас партнёров нет. Вы поставлены в список ожидания"));
-		} else {
-			startNewChat(chatId, partnerId);
-		}
-	})
-}
-
 function tryFindNewChat(chatId) {
-	db.isWaiting(chatId)
-	.then(function(isWaiting) {
-		if (isWaiting) {
-			bot.sendMessage(chatId, "Вы уже находитесь в списке ожидания.");
-		} else {
-			bot.sendMessage(chatId, "Ищу собеседника...");
-			findNewChat(chatId);
-		}
-	})
 }
-
-bot.onText(/^\/new[ ]*(.*)/, (msg, match) => {
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
-
-	db.getPartner(chatId)
-	.then(function(partnerId) {
-		if (partnerId) {
-			bot.sendMessage(chatId, 
-					"Ты не можешь начать новый чат, пока ты уже общаешься с кем-то. Набери /end, чтобы сначала закончить текущий чат.");
-		} else if (match[1] === "self") {
-			startSelfChat(chatId);
-		} else {
-			tryFindNewChat(chatId);
-		}
-	});
-});
 
 bot.onText(/^(\/.*)/, (msg) => {
 	if (msg.eaten) { return; }
@@ -119,6 +60,9 @@ const GOD_ID = process.env.GOD_ID;
 const Broadcast = require("./commands/broadcast");
 const broadcast = new Broadcast(db, bot, GOD_ID);
 
+const New = require("./commands/new");
+const new_ = new New(db, bot);
+
 bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
@@ -126,9 +70,9 @@ bot.on('message', (msg) => {
 	if (start.tryEat(msg) ||
 		stats.tryEat(msg) ||
 		end.tryEat(msg) ||
-		broadcast.tryEat(msg)) {
+		broadcast.tryEat(msg) ||
+		new_.tryEat(msg)) {
 		msg.eaten = true;
-		return;
 	}
 
 	if (msg.text && msg.text[0] == '/') return;

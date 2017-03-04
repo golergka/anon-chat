@@ -143,14 +143,16 @@ DB.prototype.removeWaiting = function(chatId) {
 	return self.isWaiting(chatId)
 	.then(function(isMember) {
 		if (!isMember) {
-			resolve();
+			return Promise.resolve();
 		} else {
-			self.redis.srem(self.keyWaiting, chatId, function(err) {
-				if (err) {
-					reject(err);
-				} else {
-					resolve();
-				}
+			return new Promise(function(resolve, reject) { 
+				self.redis.srem(self.keyWaiting, chatId, function(err) {
+					if (err) {
+						reject(err);
+					} else {
+						resolve();
+					}
+				});
 			});
 		}
 	});

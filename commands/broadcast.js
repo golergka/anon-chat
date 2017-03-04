@@ -36,4 +36,3 @@ class Broadcast extends Command {
 }
 
 module.exports = Broadcast;
-
