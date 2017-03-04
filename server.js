@@ -27,35 +27,11 @@ const bot = (function() {
 	}
 }) ();
 
-const GOD_ID = process.env.GOD_ID;
-
 const redisClient = Redis.createClient(REDIS_URL);
 const DB = require("./db");
 const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
-
-bot.onText(/^\/broadcast (.+)/, (msg, match) => {
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
-
-	if (GOD_ID && msg.from.id === GOD_ID) {
-		let broadcast = match[1];
-		bot.sendMessage(chatId, "Принято к исполнению, мой господин.");
-		db.forAllChats(function(chatId) {
-			return bot.sendMessage(chatId, broadcast);
-		}).then(function() {
-			bot.sendMessage(chatId, "Рассылка завершена, мой господин.");
-		}).catch(function(err) {
-			bot.sendMessage(chatId, "Что-то пошло не так: " + err);
-		});
-	} else {
-		bot.sendMessage(chatId, "Это не для тебя команда.");
-	}
-});
 
 function startSelfChat(chatId) {
 	db.removeWaiting(chatId)
@@ -138,13 +114,19 @@ const stats = new Stats(db, bot);
 const End = require("./commands/end");
 const end = new End(db, bot);
 
+const GOD_ID = process.env.GOD_ID;
+
+const Broadcast = require("./commands/broadcast");
+const broadcast = new Broadcast(db, bot, GOD_ID);
+
 bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
 
 	if (start.tryEat(msg) ||
 		stats.tryEat(msg) ||
-		end.tryEat(msg)) {
+		end.tryEat(msg) ||
+		broadcast.tryEat(msg)) {
 		msg.eaten = true;
 		return;
 	}
