@@ -35,24 +35,6 @@ const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
-bot.onText(/^\/stats/, (msg) => {
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
-
-	db.getStats()
-		.then(function(stats) {
-			bot.sendMessage(chatId, 
-					"Пользователей: " + stats.users + "\n" +
-					"Чатов: " + stats.chats);
-		})
-		.catch(function(err) {
-			bot.sendMessage(chatId, "Что-то пошло не так");
-		});
-});
-
 bot.onText(/^\/end/, (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
@@ -175,9 +157,15 @@ bot.onText(/^(\/.*)/, (msg) => {
 const Start = require("./commands/start");
 const start = new Start(db, bot);
 
+const Stats = require("./commands/stats");
+const stats = new Stats(db, bot);
+
 bot.on('message', (msg) => {
-	console.log("Got message!");
-	if (start.tryEat(msg)) {
+	const chatId = msg.chat.id;
+	db.rememberChat(chatId);
+
+	if (start.tryEat(msg) ||
+		stats.tryEat(msg)) {
 		return;
 	}
 
@@ -185,8 +173,6 @@ bot.on('message', (msg) => {
 	if (msg.eaten) { return; }
 	msg.eaten = true;
 
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
 
 	db.getPartner(chatId)
 	.then(function(partnerId) {
