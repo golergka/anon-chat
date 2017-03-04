@@ -33,19 +33,6 @@ const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
 
-function tryFindNewChat(chatId) {
-}
-
-bot.onText(/^(\/.*)/, (msg) => {
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
-
-	bot.sendMessage(chatId, "Извини, такая команда мне неизвестна.");
-});
-
 const Start = require("./commands/start");
 const start = new Start(db, bot);
 
@@ -63,22 +50,22 @@ const broadcast = new Broadcast(db, bot, GOD_ID);
 const New = require("./commands/new");
 const new_ = new New(db, bot);
 
+const commands = [start, stats, end, broadcast, new_];
+
 bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	db.rememberChat(chatId);
 
-	if (start.tryEat(msg) ||
-		stats.tryEat(msg) ||
-		end.tryEat(msg) ||
-		broadcast.tryEat(msg) ||
-		new_.tryEat(msg)) {
-		msg.eaten = true;
+	for(let i = 0; i < commands.length; i++) {
+		if (commands[i].tryEat(msg)) {
+			return;
+		}
 	}
 
-	if (msg.text && msg.text[0] == '/') return;
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
+	if (msg.text && msg.text[0] == '/') {
+		bot.sendMessage(chatId, "Извини, такая команда мне неизвестна.");
+		return;
+	}
 
 	db.getPartner(chatId)
 	.then(function(partnerId) {
