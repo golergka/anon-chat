@@ -6,35 +6,34 @@ const Redis = require("redis");
 const REDIS_URL = process.env.REDIS_URL;
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || "180445993:AAHghLnBrO-e5HgD-1X_J9V1XBQ_qwslpL4";
+console.log("TELEGRAM_TOKEN: " + TELEGRAM_TOKEN);
 
-const telegram_options = {
-	webHook: {
-		port: process.env.PORT
+const bot = (function() {
+	const PORT		= process.env.PORT;
+	const APP_URL	= process.env.APP_URL || "https://talkon.herokuapp.com:443";
+	console.log("Port: " + PORT);
+	console.log("App url: " + APP_URL);
+	if (PORT && APP_URL) {
+		console.log("Running on Heroku");
+		let result = new TelegramBot(TELEGRAM_TOKEN, { webHook: { port: PORT }});
+		result.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
+		console.log("Set up webhook");
+		return result;
+	} else {
+		console.log("Running locally");
+		let result = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+		console.log("Set up polling");
+		return result;
 	}
-};
-const bot = new TelegramBot(TELEGRAM_TOKEN, telegram_options);
-const url = process.env.APP_URL || "https://talkon.herokuapp.com:443";
-bot.setWebHook(`${url}/bot${TELEGRAM_TOKEN}`);
+}) ();
 
 const GOD_ID = process.env.GOD_ID;
 
 const redisClient = Redis.createClient(REDIS_URL);
-const DB = require("./db")
+const DB = require("./db");
 const db = new DB(redisClient);
 
 redisClient.on("error", (err) => { console.error("Redis error: " + err); });
-
-bot.onText(/^\/start/, (msg) => {
-	if (msg.eaten) { return; }
-	msg.eaten = true;
-
-	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
-
-	bot.sendMessage(chatId, 
-			"Привет! Это бот для анонимного чата. В нём ты сможешь найти анонимного собеседника на любую тему, и прервать разговор в любую минуту, если он тебе не понравится.\n\n" +
-			"Набери /new, чтобы найти себе собеседника.");
-});
 
 bot.onText(/^\/stats/, (msg) => {
 	if (msg.eaten) { return; }
@@ -173,7 +172,15 @@ bot.onText(/^(\/.*)/, (msg) => {
 	bot.sendMessage(chatId, "Извини, такая команда мне неизвестна.");
 });
 
+const Start = require("./commands/start");
+const start = new Start(db, bot);
+
 bot.on('message', (msg) => {
+	console.log("Got message!");
+	if (start.tryEat(msg)) {
+		return;
+	}
+
 	if (msg.text && msg.text[0] == '/') return;
 	if (msg.eaten) { return; }
 	msg.eaten = true;
