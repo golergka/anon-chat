@@ -80,15 +80,29 @@ bot.on('message', (msg) => {
 			if (msg.sticker) {
 				bot.sendSticker(partnerId, msg.sticker.file_id, options);
 			} else if (msg.audio) {
-				bot.sendAudio(partnerId, msg.audio, options);
+				bot.sendMessage(chatId, 
+						"Извини, этот бот пока не умеет пересылать аудио. Ведутся работы.");
+				bot.sendMessage(partnerId, 
+						"Твой собеседник попытался переслать тебе аудио, но я пока не умею этого делать.");
 			} else if (msg.document) {
-				bot.sendDocument(partnerId, msg.document, options);
+				bot.sendMessage(chatId, 
+						"Извини, этот бот пока не умеет пересылать документы. Ведутся работы.");
+				bot.sendMessage(partnerId, 
+						"Твой собеседник попытался переслать тебе документ, но я пока не умею этого делать.");
 			} else if (msg.game) {
-				bot.sendGame(partnerId, msg.game, options);
+				bot.sendMessage(chatId, 
+						"Извини, этот бот пока не умеет пересылать игры. Ведутся работы.");
+				bot.sendMessage(partnerId, 
+						"Твой собеседник попытался переслать тебе игру, но я пока не умею этого делать.");
 			} else if (msg.photo) {
-				bot.sendPhoto(partnerId, msg.photo, options);
+				let photoSizes = msg.photo;
+				let photoId = photoSizes[0].file_id;
+				bot.sendPhoto(partnerId, photoId, options);
 			} else if (msg.voice) {
-				bot.sendVoice(partnerId, msg.voice, options);
+				bot.sendMessage(chatId, 
+						"Извини, этот бот пока не умеет пересылать голосовые сообщения. Ведутся работы.");
+				bot.sendMessage(partnerId, 
+						"Твой собеседник попытался переслать тебе голосовое сообщение, но я пока не умею этого делать.");
 			} else {
 				bot.sendMessage(partnerId, msg.text);
 			}
