@@ -80,10 +80,7 @@ bot.on('message', (msg) => {
 			if (msg.sticker) {
 				bot.sendSticker(partnerId, msg.sticker.file_id, options);
 			} else if (msg.audio) {
-				bot.sendMessage(chatId, 
-						"Извини, этот бот пока не умеет пересылать аудио. Ведутся работы.");
-				bot.sendMessage(partnerId, 
-						"Твой собеседник попытался переслать тебе аудио, но я пока не умею этого делать.");
+				bot.sendAudio(chatId, msg.audio.file_id);
 			} else if (msg.document) {
 				bot.sendMessage(chatId, 
 						"Извини, этот бот пока не умеет пересылать документы. Ведутся работы.");
@@ -99,10 +96,7 @@ bot.on('message', (msg) => {
 				let photoId = photoSizes[0].file_id;
 				bot.sendPhoto(partnerId, photoId, options);
 			} else if (msg.voice) {
-				bot.sendMessage(chatId, 
-						"Извини, этот бот пока не умеет пересылать голосовые сообщения. Ведутся работы.");
-				bot.sendMessage(partnerId, 
-						"Твой собеседник попытался переслать тебе голосовое сообщение, но я пока не умею этого делать.");
+				bot.sendVoice(chatId, msg.voice.file_id);
 			} else {
 				bot.sendMessage(partnerId, msg.text);
 			}
