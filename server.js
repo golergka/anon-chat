@@ -84,10 +84,7 @@ bot.on('message', (msg) => {
 			} else if (msg.video) {
 				bot.sendVideo(partnerId, msg.video.file_id);
 			} else if (msg.document) {
-				bot.sendMessage(chatId, 
-						"Извини, этот бот пока не умеет пересылать документы. Ведутся работы.");
-				bot.sendMessage(partnerId, 
-						"Твой собеседник попытался переслать тебе документ, но я пока не умею этого делать.");
+				bot.sendDocument(partnerId, msg.document.file_id);
 			} else if (msg.game) {
 				bot.sendMessage(chatId, 
 						"Извини, этот бот пока не умеет пересылать игры. Ведутся работы.");
