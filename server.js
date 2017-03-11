@@ -81,6 +81,8 @@ bot.on('message', (msg) => {
 				bot.sendSticker(partnerId, msg.sticker.file_id, options);
 			} else if (msg.audio) {
 				bot.sendAudio(partnerId, msg.audio.file_id);
+			} else if (msg.video) {
+				bot.sendVideo(partnerId, msg.video.file_id);
 			} else if (msg.document) {
 				bot.sendMessage(chatId, 
 						"Извини, этот бот пока не умеет пересылать документы. Ведутся работы.");
