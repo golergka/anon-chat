@@ -53,8 +53,10 @@ const new_ = new New(db, bot);
 const commands = [start, stats, end, broadcast, new_];
 
 bot.on('message', (msg) => {
+	console.log("Message", msg);
 	const chatId = msg.chat.id;
-	db.rememberChat(chatId);
+	db.rememberChat(msg.chat);
+	db.rememberUser(msg.from);
 
 	for(let i = 0; i < commands.length; i++) {
 		if (commands[i].tryEat(msg)) {
